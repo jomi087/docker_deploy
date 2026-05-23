@@ -1,0 +1,36 @@
+# Build stage
+FROM node:22-slim AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+# Take the dist folder from first stage and place it into nginx's public website folder
+# /usr/share/nginx/html -> It is the default public website folder used by Nginx.
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
+# # why nginx ? 
+# In a React + Vite application, the npm run build command only creates the final optimized website files inside the dist folder.
+# These files usually contain index.html, bundled JavaScript, and CSS files.
+# But creating these files is not enough for the browser to use them.
+# The browser cannot directly access the dist folder from your computer or Docker container. 
+# The browser only understands HTTP requests and responses. 
+# So when the browser sees something like <script src="/assets/main.js">, it sends an HTTP request asking, “Can someone give me this file?” During development, the Vite development server answers those requests and sends the files to the browser. 
+# But in production, the Vite dev server is not running anymore. 
+# Only the built static files remain. 
+# So another server is needed to serve those files to the browser. 
+# That is why production uses tools like Nginx, serve, Express static middleware, or Apache. vercel, netlify ....
+# Their job is simply to expose the dist folder over HTTP so the browser can download the files and run the React application.
+# so that mean at running time we wil dong  docker run -p HOSTPORT : 80 
