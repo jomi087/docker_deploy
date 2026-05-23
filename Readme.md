@@ -94,12 +94,12 @@ Example:
 FROM node:22-bookworm-slim
 ```
 
-| Part | Meaning |
-|------|----------|
-| node | official Node image |
-| 22 | Node version |
-| bookworm | Debian 12 |
-| slim | lightweight variant |
+| Part     | Meaning             |
+| -------- | ------------------- |
+| node     | official Node image |
+| 22       | Node version        |
+| bookworm | Debian 12           |
+| slim     | lightweight variant |
 
 </details>
 
@@ -112,21 +112,21 @@ Docker containers usually run Linux.
 
 Common Linux distributions:
 
-| Distribution | Usage |
-|--------------|-------|
-| Ubuntu | Beginner friendly |
-| Debian | Stable servers |
-| Alpine | Lightweight |
-| Fedora | Latest technologies |
-| Arch | Advanced/custom setups |
+| Distribution | Usage                  |
+| ------------ | ---------------------- |
+| Ubuntu       | Beginner friendly      |
+| Debian       | Stable servers         |
+| Alpine       | Lightweight            |
+| Fedora       | Latest technologies    |
+| Arch         | Advanced/custom setups |
 
 ### Debian Versions
 
 | Debian Version | Codename |
-|----------------|----------|
-| Debian 11 | bullseye |
-| Debian 12 | bookworm |
-| Debian 13 | trixie |
+| -------------- | -------- |
+| Debian 11      | bullseye |
+| Debian 12      | bookworm |
+| Debian 13      | trixie   |
 
 </details>
 
@@ -135,12 +135,12 @@ Common Linux distributions:
 <details>
 <summary>Deep Dive: Image Variants</summary>
 
-| Variant | Meaning |
-|---------|----------|
-| full/default | Includes most tools |
-| slim | Smaller image |
-| distroless | Minimal OS tools |
-| debug | Includes debugging tools |
+| Variant      | Meaning                  |
+| ------------ | ------------------------ |
+| full/default | Includes most tools      |
+| slim         | Smaller image            |
+| distroless   | Minimal OS tools         |
+| debug        | Includes debugging tools |
 
 </details>
 
@@ -503,23 +503,28 @@ Mostly frontend development servers:
 Example:
 
 ```json
-"start": "vite --host 0.0.0.0"
+"dev": "vite --host 0.0.0.0" 
+// user in dev purpose only for production not required
 ```
 
 ---
 
 ## Express / Node.js
 
-in express you can do like this 
+in express you can do like this
+
 ```js
 app.listen(4000, "0.0.0.0")
 ```
+
 but Usually that is NOT required.
 so this is fine
 Example:
+
 ```js
-app.listen(4000) 
+app.listen(4000)
 ```
+
 because Node.js commonly binds externally by default.
 
 for deployment consistency and avoiding environment issues.
@@ -549,12 +554,12 @@ The image contains:
 
 ## Understanding the Command
 
-| Part | Meaning |
-|------|----------|
-| docker build | build image |
-| -t | assign image name/tag |
-| my-app | image name |
-| . | build context |
+| Part         | Meaning               |
+| ------------ | --------------------- |
+| docker build | build image           |
+| -t           | assign image name/tag |
+| my-app       | image name            |
+| .            | build context         |
 
 ---
 
@@ -624,7 +629,8 @@ Shows:
 Command:
 
 ```bash
-docker run --name my-container -p 4000:4000 my-app
+docker run --name my-containerName -p 4000:4000 image-name
+//optional -> "--name my-containerName"  then docker will give a random name
 ```
 
 ## What This Does
@@ -641,19 +647,123 @@ Syntax:
 HOST_PORT : CONTAINER_PORT
 ```
 
-Example:
+<details>
+<summary>Example with explanation</summary>
 
-```txt
-4000:4000
+## Core Rule
+```bash
+-p HOST_PORT:CONTAINER_PORT
 ```
 
-Meaning:
+- **Left side (HOST_PORT)**  
+  The port on your own computer.  
+  This can usually be **any free port**.
 
-```txt
-localhost:4000 on your computer
-forwards traffic to
-port 4000 inside the container
+- **Right side (CONTAINER_PORT)**  
+  The actual port on which the application/server is running inside the container.  
+  This must match the real listening port.
+
+---
+
+# Backend Example
+
+Suppose Express is running like this:
+
+```js
+app.listen(3000)
 ```
+
+This means:
+
+```text
+Backend server is listening on port 3000 inside the container.
+```
+
+So the right side must be `3000`.
+
+Examples:
+
+```bash
+docker run -p 3000:3000 my-backend
+docker run -p 5000:3000 my-backend
+docker run -p 9999:3000 my-backend
+```
+
+All are valid.
+
+Here:
+
+- `3000`, `5000`, `9999` are ports on your computer
+- `3000` is the real backend port inside container
+
+---
+
+# Frontend Production Example
+
+When using Nginx:
+
+```dockerfile
+EXPOSE 80
+```
+
+Nginx internally runs on port `80`.
+
+So the right side must be `80`.
+
+Examples:
+
+```bash
+docker run -p 5173:80 react-client
+docker run -p 3000:80 react-client
+docker run -p 8080:80 react-client
+```
+
+All are valid.
+
+Here:
+
+- `5173`, `3000`, `8080` are ports on your computer
+- `80` is the real Nginx port inside container
+
+---
+
+# Important Understanding
+
+In frontend production:
+
+- Vite dev server is no longer running
+- React is not deciding the port anymore
+- Nginx (or serve/Express/etc.) becomes the real server
+
+So the container port depends on:
+
+- Nginx → usually `80`
+- serve package → maybe `3000` or `4000`
+- Express → whatever port you configured
+
+---
+
+# Final Understanding
+
+## Left Side
+
+```text
+Any free port on your computer
+```
+
+You choose it.
+
+---
+
+## Right Side
+
+```text
+The actual listening port inside the container
+```
+
+This must match the real server port.
+
+</details>
 
 ---
 
@@ -689,10 +799,22 @@ Both are required.
 
 # Useful Docker Commands
 
-## Stop Container
+## Stop, start, remove & remove all Container
 
 ```bash
-docker stop <container-name>
+docker stop <container-name>/ <container-id>
+```
+
+```bash
+docker start <container-name>/ <container-id>
+```
+
+```bash
+docker rm <container-name>/ <container-id>
+```
+
+```bash
+docker container prune
 ```
 
 ---
