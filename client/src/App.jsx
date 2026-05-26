@@ -3,17 +3,23 @@ import "./App.css"
 
 function App() {
   const [message, setMessage] = useState("")
+  const [number, setNumber] = useState(0)
   useEffect(() => {
     fetch("http://localhost:4000/api/message")
       .then((res) => res.json())
-      .then((data) => setMessage(data.message))
+      .then((data) => {
+        setMessage(data.message)
+        setNumber(data.number)
+      })
       .catch((e) => console.log("error", e))
   }, [])
 
   return (
     <>
       <h1>Welcome to Docker learning process</h1>
-      <h2>data {message}</h2>
+      <h2>
+        data :- {message} {number}
+      </h2>
     </>
   )
 }
