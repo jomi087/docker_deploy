@@ -1,0 +1,67 @@
+# explaining in detail in docker-readme.md
+version: "3.9"
+
+services:
+
+  # MongoDB Database Service
+  database:
+
+    # Use prebuilt MongoDB image from Docker Hub
+    image: mongo
+
+    # Custom container name
+    container_name: mongo-container
+
+    # Port Binding (Optional)
+    # Needed only if local machine needs Mongo access
+    ports:
+      - "27017:27017"
+
+    # Restart automatically unless manually stopped
+    restart: unless-stopped
+
+
+  # Backend Service
+  server:
+
+    # Build image using Dockerfile inside ./server
+    build:
+      context: ./server
+
+    # Custom container name
+    container_name: container-express-server
+
+    # Port Binding
+    ports:
+      - "4000:4000"
+
+    # Server depends on database
+    # Start database first
+    depends_on:
+      - database
+
+    # Restart policy
+    restart: unless-stopped
+
+
+  # Frontend Service
+  client:
+
+    # Build React image
+    build:
+      context: ./client
+
+    # Container name
+    container_name: container-react-client
+
+    # React app accessible on localhost:5173
+    ports:
+      - "5173:80"
+
+    # Client depends on backend server
+    depends_on:
+      - server
+
+    # Restart policy
+    restart: unless-stopped
+

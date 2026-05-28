@@ -3,11 +3,20 @@ import cors from 'cors'
 import mongoose from 'mongoose'
 
 const app = express()
-// const MONGO_URI = mongodb://127.0.0.1:27017/dummy_Db
+// Local MongoDB installed directly on host machine
+// const MONGO_URI = "mongodb://127.0.0.1:27017/dummy_Db"
 
-// Impliement MongoDB Docker Image(notes given below)
+//? Impliement MongoDB Docker Image (Notes given below)
+// # way-1
 // const MONGO_URI = "mongodb://host.docker.internal:27017/dummy_Db"
-const MONGO_URI = "mongodb://mongodb-container:27017/dummy_Db" //"mongodb://<mongo-containerName>:27017/db-name"
+
+// # way-2
+//const MONGO_URI = "mongodb://mongodb-container:27017/dummy_Db" //"mongodb://<mongo-containerName>:27017/db-name"
+
+// # way-2 with Docker Compose Setup 
+// In Docker Compose, service names are preferred for internal container communication 
+// because Docker Compose automatically creates DNS using service names 
+const MONGO_URI = "mongodb://database:27017/dummy_Db"
 
 app.use(express.json())
 app.use(cors({

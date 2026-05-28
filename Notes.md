@@ -232,7 +232,7 @@ Docker Compose is a tool that helps us manage and run multiple Docker containers
 
 Instead of manually building, running, stopping, and configuring each container one by one, Docker Compose automates everything with a single command.
 
-It also automatically creates a shared network so containers can communicate with each other easily.
+**It also automatically creates a shared network so containers can communicate with each other easily.**
 
 For example, in a full-stack application, frontend, backend, and database containers can all be started together using Docker Compose.
 

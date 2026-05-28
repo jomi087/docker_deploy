@@ -38,7 +38,7 @@ docker run image_name
 
 # optional add-ons:
 # --name <container-name>     -> set a custom container name
-# -p hostPort: containerPort  -> bind/map container port to local machine port
+# -p hostPort: containerPort  -> bind/map container port to  machine port
 # --network <networkname>     -> comunicationg b/w 2 container
 ```
 
@@ -434,13 +434,13 @@ using:
 RUN npm install
 ```
 
-So copying local dependencies is unnecessary.
+So copying  dependencies is unnecessary.
 
 ---
 
 - Reason 2 — OS Compatibility
 
-Your local machine may use:
+Your  machine may use:
 
 - Windows
 - macOS
@@ -533,7 +533,7 @@ CMD defines the default startup command.
 Some applications inside Docker only allow connections from:
 
 ```txt
-localhost / 127.0.0.1
+host / 127.0.0.1
 ```
 
 This means:
@@ -548,7 +548,7 @@ So even if Docker forwards the port:
 docker run -p 4000:4000 my-app
 
 # "-p 4000:4000" is optional.
-# It is used to bind/map the container port to your local machine port.
+# It is used to bind/map the container port to your  machine port.
 ```
 
 browser still may NOT connect.
@@ -616,7 +616,9 @@ for deployment consistency and avoiding environment issues.
 ### Command:
 
 ```bash
-docker build -t my-app .
+docker build -t <image_name> .
+# you can give any name
+# reminder if it its a prebuild image no need to build it jst run it
 ```
 
 ### What This Does
@@ -735,7 +737,7 @@ Creates and starts a container from the Docker image.
 
   - This is not a problem inside Docker because each container has its own isolated environment.
 
-  - But on your local machine (host), the same host port cannot be used multiple times simultaneously.
+  - But on your  machine (host), the same host port cannot be used multiple times simultaneously.
 
   - So we map different host ports to the container ports.
 
@@ -744,7 +746,7 @@ Creates and starts a container from the Docker image.
 
 ┌─────────────────── HOST MACHINE ─────────────────────┐
 
-    localhost:4000                   localhost:5000
+    host:4000                   host:5000
            │                              │
            ▼                              ▼
 
@@ -896,7 +898,7 @@ This must match the real server port.
 ```txt
 Browser
    ↓
-localhost:4000
+host:4000
    ↓
 Docker Port Forwarding
    ↓
@@ -1003,9 +1005,9 @@ Host Machine MongoDB
 
 #### Pros
 
-- easy local development
+- easy  development
 - useful for testing
-- works with existing local MongoDB installation
+- works with existing  MongoDB installation
 - easy debugging using MongoDB Compass
 - convenient during early development stages
 
@@ -1066,7 +1068,7 @@ Backend container communicates directly with MongoDB container using Docker Netw
 ##### Pros
 
 - fully containerized setup
-- no local MongoDB installation needed
+- no  MongoDB installation needed
 - portable architecture
 - same setup for all developers
 - easier deployment consistency
@@ -1210,8 +1212,7 @@ docker exec -it <hostname> mongosh
 example
    docker exec -it mongodb-container mongosh
    # here u can see the new db and u can access it with mongo shell cmd eg : show dbs
-````
-
+```
 ---
 
 ##### Main Learning Outcome
@@ -1225,6 +1226,544 @@ Real containerization also includes:
 - isolated environments
 - portable application architecture
 - reproducible development setup
-  \*/
+
+# 3 - Docker Compose Notes
+
+> before learning docker compose recomending to learn docker 1st and then go with docker compose
+
+> Docker compose configuration -> step-by-step, Structured learning notes for understanding
+
+## What is Docker Compose & why?
+
+Docker Compose is used to manage multiple containers using a single configuration file.
+
+Instead of manually:
+
+* creating networks
+* building images
+* running containers
+* connecting containers
+
+one by one,
+
+Docker Compose automates everything using:
+
+```bash
+docker-compose.yml
+```
+
+and a single command:
+
+```bash
+docker compose up
+```
+
+---
+### Problems With Manual Docker
+
+* Before Docker Compose (Manual Docker Commands)
+
+```bash
+# Create custom network
+docker network create mynetwork
+
+# Run MongoDB Container
+docker run --name mongodb-container --network mynetwork -d -p 27017:27017 mongo
+
+# Build Express Image
+docker build -t express-server ./server
+
+# Run Express Container
+docker run --name express-container --network mynetwork -p 4000:4000 express-server
+
+# Build React Image
+docker build -t react-client ./client
+
+# Run React Container
+docker run --name react-container -p 5173:80 react-client
+
+```
+
+- ie,Managing manually becomes difficult because we need to:
+   * create networks manually
+   * remember all commands
+   * run containers in correct order
+   * connect containers manually
+   * restart containers manually
+
+Docker Compose solves this.
+
+---
+
+### solution - **docker-compose.yml**
+
+```yaml
+version: "3.9"
+
+services:
+
+  # MongoDB Database Service
+  database:
+
+    # Use prebuilt MongoDB image from Docker Hub
+    image: mongo
+
+    # Custom container name
+    container_name: mongo-container
+
+    # Port Binding (Optional)
+    # Needed only if  machine needs Mongo access
+    ports:
+      - "27017:27017"
+
+    # Restart automatically unless manually stopped
+    restart: unless-stopped
 
 
+  # Backend Service
+  server:
+
+    # Build image using Dockerfile inside ./server
+    build:
+      context: ./server
+
+    # Custom container name
+    container_name: container-express-server
+
+    # Port Binding
+    ports:
+      - "4000:4000"
+
+    # Server depends on database
+    # Start database first
+    depends_on:
+      - database
+
+    # Restart policy
+    restart: unless-stopped
+
+
+  # Frontend Service
+  client:
+
+    # Build React image using Dockerfile
+    build:
+      context: ./client
+
+    # Container name
+    container_name: container-react-client
+
+    # React app accessible on host:5173
+    ports:
+      - "5173:80"
+
+    # Client depends on backend server
+    depends_on:
+      - server
+
+    # Restart policy
+    restart: unless-stopped
+```
+
+---
+
+### Code explanation
+
+#### services
+
+```yaml
+services:
+```
+
+Used to define containers.
+
+Each service usually becomes one container.
+
+Example:
+
+```yaml
+services:
+    #container 1
+    database:
+    #container 2
+    server:
+    #container 3
+    client:
+```
+
+This creates:
+
+* MongoDB container
+* Backend container
+* Frontend container
+
+---
+
+#### build
+
+```yaml
+build:
+  context: ./server
+```
+
+Means:
+
+1. Go inside `./server`
+2. Find Dockerfile
+3. Build image using Dockerfile
+
+Equivalent manual command:
+```bash
+docker build -t some-image ./server
+# Docker Compose AUTO-generates image name. 
+```
+- This built image is later used by **docker compose up** to create and run the container.
+
+---
+
+#### image
+
+```yaml
+image: mongo
+```
+
+Means:
+
+> Use already existing prebuilt image from Docker Hub.
+
+No Dockerfile needed.
+
+Equivalent manual command:
+
+```bash
+docker pull mongo
+```
+
+---
+
+#### build vs image
+
+| build                 | image                          |
+| --------------------- | ------------------------------ |
+| Creates image ly | Uses prebuilt image            |
+| Needs Dockerfile      | No Dockerfile needed           |
+| Usually your own app  | Usually official/prebuilt apps |
+
+---
+
+
+#### container_name
+
+```yaml
+container_name: express-container
+```
+
+Same as:
+
+```bash
+--name express-container
+```
+
+Used to give custom name to container.
+
+---
+
+#### ports
+
+```yaml
+ports:
+  - "4000:4000"
+```
+
+Same as:
+
+```bash
+-p 4000:4000
+```
+
+Format:
+
+```txt
+HOST_PORT : CONTAINER_PORT
+```
+
+Example:
+
+```txt
+5173:80
+```
+
+means:
+
+```txt
+host:5173
+        ↓
+container:80
+```
+
+---
+
+---
+
+#### depends_on
+
+```yaml
+depends_on:
+  - database
+```
+
+Means:
+
+> Start `database` service before `server`.
+
+Useful when one service depends on another service.
+
+---
+
+#### restart
+
+```yaml
+restart: unless-stopped
+```
+
+Means:
+
+If container crashes or Docker restarts,
+automatically restart the container.
+
+But if YOU manually stop it,
+Docker will not restart it.
+
+---
+
+## Automatic Networks In Docker Compose
+
+One of the biggest advantages of Docker Compose is:
+
+```txt
+Automatic Network Creation
+```
+
+Before Compose:
+
+```bash
+docker network create mynetwork
+```
+
+was required manually.
+
+But in Compose:
+
+```txt
+Docker Compose automatically:
+1. Creates a network
+2. Connects all services to same network
+3. Allows container communication
+```
+
+No need to manually create networks.
+
+---
+
+## Service Communication Inside Compose
+
+Inside Docker Compose:
+
+```txt
+Service Name = Host Name
+```
+
+Example:
+
+```yaml
+services:
+  database:
+```
+
+Now backend can connect using: service name 
+
+```txt
+mongodb://database:27017
+```
+because containers communicate using service names.
+
+#### explain in breif
+
+##### Service Name vs Container Name in Docker Compose
+
+Before Docker Compose:
+
+1. We manually created a Docker network
+2. Connected containers to the same network
+3. Used container names for communication
+
+Example:
+
+```bash
+docker network create mynetwork
+
+docker run --name mongodb-container --network mynetwork mongo
+docker run --name backend-container --network mynetwork backend-image
+```
+
+Backend connected to MongoDB using: 
+
+```bash
+mongodb://mongodb-container:27017
+# connectiong using containerName
+```
+because both containers were inside the same Docker network.
+
+---
+
+##### What Changes In Docker Compose?
+
+Docker Compose automatically:
+
+1. Creates the network
+2. Connects all services to that network
+3. Creates internal DNS using SERVICE NAMES
+
+Example:
+
+```yaml
+services:
+  database:
+  server:
+```
+
+Now Docker Compose internally prefers:
+```txt
+database,
+ie service name
+instead of mongodb-container
+```
+
+So backend should connect using:
+
+```bash
+mongodb://database:27017
+```
+
+---
+
+##### Important Point
+
+Docker networking did NOT change.
+
+The only difference is:
+
+```txt
+instead of Container name Docker Compose officially prefers SERVICE NAMES
+for container-to-container communication.
+```
+
+---
+
+##### Final Mental Model
+
+##### Before Compose
+
+```txt
+Manual Network + Container Name
+```
+
+---
+
+##### After Compose
+
+```txt
+Automatic Network + Service Name
+```
+
+---
+
+## Important Flow
+
+Docker Compose internally does:
+
+```txt
+Create Network
+      ↓
+Build/Pull Images
+      ↓
+Create Containers
+      ↓
+Connect Containers To Network
+      ↓
+Run Containers
+```
+
+All automatically using:
+
+```bash
+docker compose up
+```
+
+---
+
+
+## Common Commands
+
+#### Start Containers
+
+```bash
+docker compose up
+```
+
+---
+
+#### Build + Start
+
+```bash
+docker compose up --build
+```
+
+Used after code changes.
+
+---
+
+#### Run In Background
+
+```bash
+docker compose up -d
+```
+
+---
+
+#### Stop Containers
+
+```bash
+docker compose down
+```
+
+---
+
+#### See Running Containers
+
+```bash
+docker ps
+```
+
+---
+
+## Simple Mental Model
+
+| Thing          | Purpose                     |
+| -------------- | --------------------------- |
+| Dockerfile     | Instructions to build image |
+| Image          | Blueprint/template          |
+| Container      | Running instance of image   |
+| Docker Compose | Manages multiple containers |
+
+---
+
+```txt
+Dockerfile
+    ↓
+Creates Image
+    ↓
+Creates Container
+    ↓
+Docker Compose manages all containers together
+```
